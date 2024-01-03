@@ -66,8 +66,8 @@ def sendapi(data):
     # st.info(f"Sending API... {data}")
     # print(data)
     # Insert data into emo_collection
-    # with st.spinner("Wait for it..."):
-    #     emo_collection.insert_many(data)
+    with st.spinner("Wait for it..."):
+        emo_collection.insert_many(data)
 
     st.session_state["state"] = False
     st.session_state["data"] = None
