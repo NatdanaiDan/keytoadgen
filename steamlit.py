@@ -9,9 +9,17 @@ class KeyToAdApp:
         self.db = self.client["keytoad"]
         self.collection = self.db["keytoad"]
         self.emo_collection = self.db["emodata"]
+        self.collection_duplicate = self.db["keytoadduplicated"]
 
         self.options = ["Normal", "Luxury", "Chill", "Exclusive", "Bad"]
         self.data_editor = None
+        self.javascriptgotop = """
+            <script>
+                var body = window.parent.document.querySelector(".main");
+                console.log(body);
+                body.scrollTop = 0;
+            </script>
+            """
 
         st.set_page_config(
             page_title="KeyToAd",
@@ -19,28 +27,46 @@ class KeyToAdApp:
             layout="wide",
             initial_sidebar_state="expanded",
         )
-
         if "state" not in st.session_state:
             st.session_state["state"] = False
 
         if "data" not in st.session_state:
             st.session_state["data"] = None
 
-    def get_random_data(self):
-        listdata = list(self.collection.aggregate([{"$sample": {"size": 5}}]))
+    def get_random_data(self, sample_size=5):
+        while True:
+            listdata = list(
+                self.collection.aggregate([{"$sample": {"size": sample_size}}])
+            )
 
-        status = True
-        while status:
-            for item in listdata:
-                if self.emo_collection.find_one({"_id": item["_id"]}):
-                    listdata = list(
-                        self.collection.aggregate([{"$sample": {"size": 5}}])
+            if not any(
+                self.emo_collection.find_one({"_id": item["_id"]}) for item in listdata
+            ):
+                return listdata
+
+    def get_random_match_all(self, sample_size=1):
+        while True:
+            data = list(
+                self.collection_duplicate.aggregate(
+                    [{"$sample": {"size": sample_size}}]
+                )
+            )
+            context_text = data[0]["context"]
+
+            # Check if context_text is not in self.emo_collection
+            while self.emo_collection.find_one({"_id": data[0]["_id"]}):
+                data = list(
+                    self.collection_duplicate.aggregate(
+                        [{"$sample": {"size": sample_size}}]
                     )
-                    break
-            else:
-                status = False
+                )
+                context_text = data[0]["context"]
 
-        return listdata
+            # Use match stage to get all data that have the same context
+            match_stage = {"$match": {"context": context_text}}
+            datasame = list(self.collection_duplicate.aggregate([match_stage]))
+
+            return datasame
 
     def send_api(self, data):
         with st.spinner("Wait for it..."):
@@ -53,11 +79,20 @@ class KeyToAdApp:
 
     def run(self):
         st.title("KeyToAd")
+        st.header(
+            "get random กับ match all ต่างกันที่ get random จะเอาข้อมูลที่ไม่ซ้ำกันเลยแบบสุ่มจริงๆ แต่ match all จะ random ข้อมูลที่มี context เหมือนกันมาทั้งหมด Recommend Match ALL !!!"
+        )
+        st.header("⚠️⚠️⚠️ Recommend Match ALL !!! ⚠️⚠️⚠️ จะได้สอนดีกว่า")
 
         if st.button("🔁 Get Random Data 🔁"):
             st.session_state["state"] = True
             with st.status("Loading Data..."):
                 st.session_state["data"] = self.get_random_data()
+
+        if st.button("🔁 Get Random Match All 🔁"):
+            st.session_state["state"] = True
+            with st.status("Loading Data..."):
+                st.session_state["data"] = self.get_random_match_all()
 
         self.data_editor = StreamlitDataEditor(
             data=st.session_state["data"] if st.session_state["state"] else None,
@@ -74,15 +109,7 @@ class KeyToAdApp:
                 st.warning("Please get random data first")
 
         if st.button("⬆️ Go Top ⬆️"):
-            js = """
-            <script>
-                var body = window.parent.document.querySelector(".main");
-                console.log(body);
-                body.scrollTop = 0;
-            </script>
-            """
-
-            st.components.v1.html(js)
+            st.components.v1.html(self.javascriptgotop)
 
 
 class StreamlitDataEditor:
