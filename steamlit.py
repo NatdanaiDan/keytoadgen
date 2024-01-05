@@ -11,7 +11,7 @@ class KeyToAdApp:
         self.emo_collection = self.db["emodata"]
         self.collection_duplicate = self.db["keytoadduplicated"]
 
-        self.options = ["Normal", "Luxury", "Chill", "Exclusive", "Bad"]
+        self.options = ["Bad","Normal", "Luxury", "Chill", "Exclusive"]
         self.data_editor = None
         self.javascriptgotop = """
             <script>
