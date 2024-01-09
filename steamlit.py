@@ -11,7 +11,7 @@ class KeyToAdApp:
         self.emo_collection = self.db["emodata"]
         self.collection_duplicate = self.db["keytoadduplicated"]
 
-        self.options = ["Bad","Normal", "Luxury", "Chill", "Exclusive"]
+        self.options = ["Bad", "Normal", "Luxury", "Chill", "Exclusive"]
         self.data_editor = None
         self.javascriptgotop = """
             <script>
@@ -20,6 +20,7 @@ class KeyToAdApp:
                 body.scrollTop = 0;
             </script>
             """
+        # count row in emo_collection
 
         st.set_page_config(
             page_title="KeyToAd",
@@ -32,6 +33,9 @@ class KeyToAdApp:
 
         if "data" not in st.session_state:
             st.session_state["data"] = None
+
+        if "progress" not in st.session_state:
+            st.session_state["progress"] = self.emo_collection.count_documents({})
 
     def get_random_data(self, sample_size=5):
         while True:
@@ -83,6 +87,7 @@ class KeyToAdApp:
             "get random กับ match all ต่างกันที่ get random จะเอาข้อมูลที่ไม่ซ้ำกันเลยแบบสุ่มจริงๆ แต่ match all จะ random ข้อมูลที่มี context เหมือนกันมาทั้งหมด Recommend Match ALL !!!"
         )
         st.header("⚠️⚠️⚠️ Recommend Match ALL !!! ⚠️⚠️⚠️ จะได้สอนดีกว่า")
+        st.metric(label="Progress", value=f"{st.session_state['progress']}")
 
         if st.button("🔁 Get Random Data 🔁"):
             st.session_state["state"] = True
@@ -105,6 +110,7 @@ class KeyToAdApp:
         if st.button("✉️ Send API ✉️"):
             if st.session_state["state"]:
                 self.send_api(st.session_state["data"])
+                st.session_state["progress"] = self.emo_collection.count_documents({})
             else:
                 st.warning("Please get random data first")
 
