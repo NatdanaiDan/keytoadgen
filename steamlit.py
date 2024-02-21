@@ -139,6 +139,6 @@ class StreamlitDataEditor:
 
 if __name__ == "__main__":
     app = KeyToAdApp(
-        "mongodb+srv://64015037:2YqYA4kjsTImOMmY@keytoad.nslb9f9.mongodb.net/?retryWrites=true&w=majority"
+        "mongodb+srv:/XXXXX"
     )
     app.run()
